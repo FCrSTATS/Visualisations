@@ -52,7 +52,7 @@ geom_point()
 
 ![](Untitled_files/figure-markdown_github/unnamed-chunk-3-1.png)
 
-![Plot Version 1](/Users/Joe/plot1.png)
+![Plot Version 1](https://github.com/FCrSTATS/Visualisations/blob/master/Images/plot1.png?raw=true)
 
 Great, it's that easy. But let's build on this base plot. Let's add the crosshairs, which are essentially the mean of each axis. This allows us to say anything above the line is 'above average' and anything below the line is 'below average'.
 
