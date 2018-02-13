@@ -65,7 +65,7 @@ geom_hline(yintercept=mean(GoalsAgainst))
 
 ![](Untitled_files/figure-markdown_github/unnamed-chunk-4-1.png)
 
-![Plot Version 2](/Users/Joe/plot2.png)
+![Plot Version 2](https://github.com/FCrSTATS/Visualisations/blob/master/Images/plot2.png?raw=true)
 
 That work's but the lines are a little brash and heavy. Let's make the line a dashed line, change the colour to red and make it a little see-through.
 
@@ -78,7 +78,7 @@ geom_hline(yintercept=mean(GoalsAgainst), linetype="dashed", alpha = 0.4, colour
 
 ![](Untitled_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
-![Plot Version 3](/Users/Joe/plot3.png)
+![Plot Version 3](https://github.com/FCrSTATS/Visualisations/blob/master/Images/plot3.png?raw=true)
 
 This now works pretty well, although it's hard to know which team is which! So we let's add some labels.
 
@@ -92,7 +92,7 @@ geom_text(size = 2, nudge_y = -0.5)
 
 ![](Untitled_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
-![Plot Version 4](/Users/Joe/plot4.png)
+![Plot Version 4](https://github.com/FCrSTATS/Visualisations/blob/master/Images/plot4.png?raw=true)
 
 Now we want to create two labels to go in the top left and the bottom right corners to help the reader understand the plot better. To do this we create a new dataframe for the annotations and use that to position them in the corner.
 
@@ -114,7 +114,7 @@ ggplot(data = df, aes(x=GoalsFor, y=GoalsAgainst, label = Teams)) +
 
 ![](Untitled_files/figure-markdown_github/unnamed-chunk-7-1.png)
 
-![Plot Version 5](/Users/Joe/plot5.png)
+![Plot Version 5](https://github.com/FCrSTATS/Visualisations/blob/master/Images/plot5.png?raw=true)
 
 This works pretty well however, it covers up the Stoke City data point. So we change the ordering so the data point is on top of the annotations. We can also remove the legend and add a title.
 
@@ -138,7 +138,7 @@ ggplot(data = df, aes(x=GoalsFor, y=GoalsAgainst, label = Teams)) +
 
 ![](Untitled_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
-![Plot Version 6](/Users/Joe/plot6.png)
+![Plot Version 6](https://github.com/FCrSTATS/Visualisations/blob/master/Images/plot6.png?raw=true)
 
 Have a play around with the settings of the plots to discover how it works and make it your own.
 
@@ -163,7 +163,7 @@ ggplot(data = df, aes(x=GoalsFor, y=GoalsAgainst)) +
 
 ![](Untitled_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
-![Plot Final Version](/Users/Joe/plot7.png)
+![Plot Final Version](https://github.com/FCrSTATS/Visualisations/blob/master/Images/plot7.png?raw=true)
 
 Final Code
 ----------
