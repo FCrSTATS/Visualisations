@@ -1,0 +1,450 @@
+Building a Radar Plot: from the ground up in ggplot2
+================
+
+This is a R conversion of a tutorial by [FC Python](https://fcpython.com/tag/radar-chart). I take no credit for the idea and have their blessing to make this conversion. All text is a direct copy unless changes were relevant. Please follow them on [twitter](www.twitter.com/FC_Python) and if you have a desire to learn Python then they are a fantastic resource!
+
+In football analysis and video games, radar charts have been popularised in a number of places, from the FIFA series, to [Ted Knutson’s](https://twitter.com/mixedknuts) innovative ways of displaying player data.
+
+Radar charts are an engaging way to show data that typically piques more attention than a bar chart although you can often use both of these to show the same data.
+
+The Data
+--------
+
+This article runs through the creation of basic radar charts in R, plotting the FIFA Ultimate Team data of a couple of players, before creating a function to streamline the process. To start, let’s get our libraries and data pulled together.
+
+``` r
+#Create a data frame from Messi and AdamaTraore's FIFA 2018 attribute data 
+
+LionelMessi <- c(Pace = 96, Shooting = 97, Passing = 98, Dribbling = 99,Defending = 45,Physical = 81)
+AdamaTraore <- c(Pace = 93, Shooting = 60, Passing = 59, Dribbling = 80,Defending = 24,Physical = 70)
+
+data <- rbind(LionelMessi, AdamaTraore)
+data
+```
+
+    ##             Pace Shooting Passing Dribbling Defending Physical
+    ## LionelMessi   96       97      98        99        45       81
+    ## AdamaTraore   93       60      59        80        24       70
+
+Plotting data in a radar has lots of similarities to plotting along a straight line (like a bar chart). We still need to provide data on where our line goes, we need to label our axes and so on. However, as it is a circle, we will also need to provide the angle at which the lines run. This is much easier than it sounds with R.
+
+Firstly, let’s do the easy bits and take a list of Attributes for our labels, along with a basic count of how many there are.
+
+``` r
+Attributes = colnames(data)
+AttNo = length(Attributes)
+```
+
+We then take a list of the values that we want to plot, then copy the first value to the end. When we plot the data, this will be the line that the radar follows.
+
+``` r
+data <- cbind(data, data[,1])
+```
+
+Building the Radar
+------------------
+
+There are packages that can help us create radar plots but these won't be as flexible to our needs and we miss out on a create learning experience. So we are going to construct our radar from the ground up as its a great way to show how ggplot2 works and it could inspire you to create other visulations. Let's get cracking...
+
+``` r
+## first make sure ggplot2 package is installed and loaded 
+require(ggplot2)
+```
+
+    ## Loading required package: ggplot2
+
+``` r
+## create a empty plot with a size of x -120,120 and y of -120,150 and save it to object 'p'
+ggplot() + xlim(c(-120, 120)) + ylim(c(-120, 150))
+```
+
+![](radar_files/figure-markdown_github/unnamed-chunk-4-1.png)
+
+Pretty easy, and we have our base plot sorted. In ggplot2 R will read from start to finish, this means we can build a graphic up layer by layer. Newer layers are displayed on top. So lets build the cirlces of our radar.
+
+Strangly, R doesn't have a good way of plotting circles with ggplot2 so we create a custom function called cirlceFun and create the data for 4 circles for values 25, 50, 75, 100.
+
+``` r
+circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
+    r = diameter / 2
+    tt <- seq(0,2*pi,length.out = npoints)
+    xx <- center[1] + r * cos(tt)
+    yy <- center[2] + r * sin(tt)
+    return(data.frame(x = xx, y = yy))
+}
+
+circle1 <- circleFun(c(0,0),200,npoints = 100)
+circle2 <- circleFun(c(0,0),150,npoints = 100)
+circle3 <- circleFun(c(0,0),100,npoints = 100)
+circle4 <- circleFun(c(0,0),50,npoints = 100)
+```
+
+Now let's plot them usuing the geom\_polygon method. We give them alternative colours and give the outer border a darker line. Feel free to change the colours to what you want.
+
+``` r
+## Add the radar background
+ggplot() + xlim(c(-120, 120)) + ylim(c(-120, 150)) + 
+## Add circles
+geom_polygon(data = circle1, aes(x=x,y=y),fill = "#F0F0F0", colour = "#969696") + geom_polygon(data = circle2, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") + geom_polygon(data = circle3, aes(x=x,y=y),fill = "#F0F0F0", colour = "#d9d9d9") + geom_polygon(data = circle4, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9")
+```
+
+![](radar_files/figure-markdown_github/unnamed-chunk-6-1.png)
+
+This looks but but we don't want the axis and grpah background so let's remove that with the help of theme\_void().
+
+``` r
+## Add the radar background
+ggplot() + xlim(c(-120, 120)) + ylim(c(-120, 150)) + 
+## Add circles
+geom_polygon(data = circle1, aes(x=x,y=y),fill = "#F0F0F0", colour = "#969696") + geom_polygon(data = circle2, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") + geom_polygon(data = circle3, aes(x=x,y=y),fill = "#F0F0F0", colour = "#d9d9d9") + geom_polygon(data = circle4, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") +
+## Change the theme to void 
+theme_void()
+```
+
+![](radar_files/figure-markdown_github/unnamed-chunk-7-1.png)
+
+Much better! Now we want to visually divide our radar plot into the number of To do this we divide the radians in a circle by the number of attributes we have to plot. Then create an arrays of the results with the seq() function.
+
+``` r
+angle_spilt <- (2*pi) / (AttNo)
+angle_spilt_seq <- seq(0,(2*pi),angle_spilt)
+angle_spilt_seq
+```
+
+    ## [1] 0.000000 1.047198 2.094395 3.141593 4.188790 5.235988 6.283185
+
+In the code below we will create some empty datafame to store our information then calculate x,y positions of our radars segment deviding lines and for the labelling of attributes and the value key.
+
+``` r
+# empty dataframes to catch results 
+LineData <- data.frame(x = numeric, y = numeric, stringsAsFactors = F)
+TitlePositioning <- data.frame(title = character, x = numeric, y = numeric, stringsAsFactors = F)
+
+## create plot background construction data  
+for (i in 1:NCOL(data)) {
+  angle_multiplier <- if(i < NCOL(data)){i}else{1}
+  radians_for_segment <- angle_spilt_seq[i]
+
+  x <- 100 * cos(radians_for_segment)
+  y <- 100 * sin(radians_for_segment)
+  temp <- data.frame(x = x, y = y, stringsAsFactors = F)
+  LineData <- rbind(temp, LineData)
+  
+  x <- 112 * cos(radians_for_segment)
+  y <- 112 * sin(radians_for_segment)
+  title <- colnames(data)[i]
+  temp <- data.frame(title = title, x = x, y = y, stringsAsFactors = F)
+  TitlePositioning <- rbind(temp, TitlePositioning)
+}
+
+## create the value labellings data 
+values <- c(25,50,75)
+radian_for_values <- angle_spilt / 2
+x <- values * cos(radian_for_values)
+y <- values * sin(radian_for_values)
+ValuePositioning <- data.frame(values = values, x = x, y = y, stringsAsFactors = F)
+
+## Add the origin values for the lines 
+LineData$x2 <- 0
+LineData$y2 <- 0
+
+## check the data output 
+LineData
+```
+
+    ##      x             y x2 y2
+    ## 1  100 -2.449294e-14  0  0
+    ## 2   50 -8.660254e+01  0  0
+    ## 3  -50 -8.660254e+01  0  0
+    ## 4 -100  1.224647e-14  0  0
+    ## 5  -50  8.660254e+01  0  0
+    ## 6   50  8.660254e+01  0  0
+    ## 7  100  0.000000e+00  0  0
+
+``` r
+TitlePositioning
+```
+
+    ##       title    x             y
+    ## 1            112 -2.743209e-14
+    ## 2  Physical   56 -9.699485e+01
+    ## 3 Defending  -56 -9.699485e+01
+    ## 4 Dribbling -112  1.371604e-14
+    ## 5   Passing  -56  9.699485e+01
+    ## 6  Shooting   56  9.699485e+01
+    ## 7      Pace  112  0.000000e+00
+
+``` r
+ValuePositioning
+```
+
+    ##   values        x    y
+    ## 1     25 21.65064 12.5
+    ## 2     50 43.30127 25.0
+    ## 3     75 64.95191 37.5
+
+Fantastic! that was a lot of the hard work done. Now lets plot these on the radar and see what it looks like.
+
+``` r
+## Add the radar background
+ggplot() + xlim(c(-120, 120)) + ylim(c(-120, 150)) + 
+## Add circles
+geom_polygon(data = circle1, aes(x=x,y=y),fill = "#F0F0F0", colour = "#969696") + geom_polygon(data = circle2, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") + geom_polygon(data = circle3, aes(x=x,y=y),fill = "#F0F0F0", colour = "#d9d9d9") + geom_polygon(data = circle4, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") +
+## Change the theme to void 
+theme_void() +
+## Add the segment lines and attribute/value titles 
+geom_segment(data=LineData, aes(x = LineData$x, y = LineData$y, xend = LineData$x2, yend = LineData$y2),colour = "#d9d9d9", linetype = "dashed") + 
+annotate("text", x = TitlePositioning$x , y = TitlePositioning$y, label = TitlePositioning$title, size= 2.5) +  
+annotate("text", x = ValuePositioning$x , y = ValuePositioning$y, label = ValuePositioning$values, size= 2.5, colour = "#969696")
+```
+
+![](radar_files/figure-markdown_github/unnamed-chunk-10-1.png)
+
+I am happy with the style and the look, yourself? If not, have a play around with the colours and see for yourself.
+
+Adding the Player Data
+----------------------
+
+It's ready for player data! We need to calculate the x,y details of the player data we want to plot.
+
+``` r
+# empty dataframe to catch result 
+polydata <- data.frame(player = character, value = numeric, radians = numeric, x = numeric, y = numeric, stringsAsFactors = F)
+
+## create polygon data for the players 
+for (i in 1:NCOL(data)) {
+  
+  for (p in 1:NROW(data)) {
+    
+  player2calc <- data[p,]
+  angle_multiplier <- if(i < NCOL(data)){i}else{1}
+  radians_for_segment <- angle_spilt_seq[i]
+  x <- player2calc[i] * cos(radians_for_segment)
+  y <- player2calc[i] * sin(radians_for_segment)
+  player <- rownames(data)[p]
+  temp <- data.frame(player = player, value = player2calc[i], radians = radians_for_segment, x = x, y = y, stringsAsFactors = F)
+  polydata <- rbind(temp, polydata)
+  }
+}
+head(polydata)
+```
+
+    ##                 player value  radians     x             y
+    ## 1          AdamaTraore    93 6.283185  93.0 -2.277843e-14
+    ## 11         LionelMessi    96 6.283185  96.0 -2.351322e-14
+    ## Physical   AdamaTraore    70 5.235988  35.0 -6.062178e+01
+    ## Physical1  LionelMessi    81 5.235988  40.5 -7.014806e+01
+    ## Defending  AdamaTraore    24 4.188790 -12.0 -2.078461e+01
+    ## Defending1 LionelMessi    45 4.188790 -22.5 -3.897114e+01
+
+Calculations finished, let's first spilt the data into player 1 and player 2.
+
+``` r
+## split the data up into player 1 and 2
+playersDB <- unique(polydata$player)
+player1 <- polydata[which(polydata$player == playersDB[1]),]
+player2 <- polydata[which(polydata$player == playersDB[2]),]
+```
+
+Great, let's plot the data for player one using the geom\_polgon() function to add the area and geom\_point() function to add some points.
+
+``` r
+## Add the radar background
+ggplot() + xlim(c(-120, 120)) + ylim(c(-120, 150)) + 
+## Add circles
+geom_polygon(data = circle1, aes(x=x,y=y),fill = "#F0F0F0", colour = "#969696") + geom_polygon(data = circle2, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") + geom_polygon(data = circle3, aes(x=x,y=y),fill = "#F0F0F0", colour = "#d9d9d9") + geom_polygon(data = circle4, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") +
+## Change the theme to void 
+theme_void() +
+## Add the segment lines and attribute/value titles 
+geom_segment(data=LineData, aes(x = LineData$x, y = LineData$y, xend = LineData$x2, yend = LineData$y2),colour = "#d9d9d9", linetype = "dashed") + 
+annotate("text", x = TitlePositioning$x , y = TitlePositioning$y, label = TitlePositioning$title, size= 2.5) +  
+annotate("text", x = ValuePositioning$x , y = ValuePositioning$y, label = ValuePositioning$values, size= 2.5, colour = "#969696") +
+## Add player 1 data 
+geom_polygon(data = player1, aes(x=x,y=y),fill = "#A30845", colour = "#A30845", alpha = 0.3) + geom_point(data = player1, aes(x = x, y = y),size=0.3, colour= "#A30845")
+```
+
+![](radar_files/figure-markdown_github/unnamed-chunk-13-1.png)
+
+We just need to add a title for the graph and we are good to go!
+
+``` r
+## create the title string for player 1
+Player1_title <- gsub('([[:upper:]])', ' \\1', playersDB[1])
+Player1_title <- trimws(Player1_title)
+
+## Add the radar background
+ggplot() + xlim(c(-120, 120)) + ylim(c(-120, 150)) + 
+## Add circles
+geom_polygon(data = circle1, aes(x=x,y=y),fill = "#F0F0F0", colour = "#969696") + geom_polygon(data = circle2, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") + geom_polygon(data = circle3, aes(x=x,y=y),fill = "#F0F0F0", colour = "#d9d9d9") + geom_polygon(data = circle4, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") +
+## Change the theme to void 
+theme_void() +
+## Add the segment lines and attribute/value titles 
+geom_segment(data=LineData, aes(x = LineData$x, y = LineData$y, xend = LineData$x2, yend = LineData$y2),colour = "#d9d9d9", linetype = "dashed") + 
+annotate("text", x = TitlePositioning$x , y = TitlePositioning$y, label = TitlePositioning$title, size= 2.5) +  
+annotate("text", x = ValuePositioning$x , y = ValuePositioning$y, label = ValuePositioning$values, size= 2.5, colour = "#969696") +
+## Add player 1 data 
+geom_polygon(data = player1, aes(x=x,y=y),fill = "#A30845", colour = "#A30845", alpha = 0.3) + geom_point(data = player1, aes(x = x, y = y),size=0.3, colour= "#A30845") + 
+## Add Chart Title
+annotate("text", x = -110 , y = 130, label = Player1_title, size= 5, colour = "#A30845", family = "Helvetica", fontface = "bold", hjust = 0) + 
+annotate("text", x = 110 , y = 130, label = "FIFA 18 Data", size= 4, colour = "#969696", family = "Helvetica", fontface = "bold", hjust = 1)
+```
+
+![](radar_files/figure-markdown_github/unnamed-chunk-14-1.png)
+
+Fantastic, we now have the graph working for one player which is very useful on its own but we can use a radar plot to compare two players perfectly. It's a tough call to decide who is better out of Lionel Messi and Adama Traore, let's get some help from the radar plot.
+
+``` r
+## Create Title Strings for Player 2
+Player2_title <- gsub('([[:upper:]])', ' \\1', playersDB[2])
+Player2_title <- trimws(Player2_title)
+
+## Add the radar background
+ggplot() + xlim(c(-120, 120)) + ylim(c(-120, 150)) + 
+## Add circles
+geom_polygon(data = circle1, aes(x=x,y=y),fill = "#F0F0F0", colour = "#969696") + geom_polygon(data = circle2, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") + geom_polygon(data = circle3, aes(x=x,y=y),fill = "#F0F0F0", colour = "#d9d9d9") + geom_polygon(data = circle4, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") +
+## Change the theme to void 
+theme_void() +
+## Add the segment lines and attribute/value titles 
+geom_segment(data=LineData, aes(x = LineData$x, y = LineData$y, xend = LineData$x2, yend = LineData$y2),colour = "#d9d9d9", linetype = "dashed") + 
+annotate("text", x = TitlePositioning$x , y = TitlePositioning$y, label = TitlePositioning$title, size= 2.5) +  
+annotate("text", x = ValuePositioning$x , y = ValuePositioning$y, label = ValuePositioning$values, size= 2.5, colour = "#969696") +
+## Add player 1 data 
+geom_polygon(data = player1, aes(x=x,y=y),fill = "#A30845", colour = "#A30845", alpha = 0.3) + geom_point(data = player1, aes(x = x, y = y),size=0.3, colour= "#A30845") + 
+## Add Chart Title
+annotate("text", x = -110 , y = 130, label = Player1_title, size= 5, colour = "#A30845", family = "Helvetica", fontface = "bold", hjust = 0) + 
+annotate("text", x = 110 , y = 130, label = "FIFA 18 Data", size= 4, colour = "#969696", family = "Helvetica", fontface = "bold", hjust = 1) +
+## Add the player 2 polygon and data points
+geom_polygon(data = player2, aes(x=x,y=y),fill = "#00B20B", colour = "#00B20B", alpha = 0.3) +
+geom_point(data = player2, aes(x = x, y = y),size=0.3, colour= "#00B20B") +
+## Add the titles for player 2
+annotate("text", x = -110 , y = 116, label = Player2_title, size= 5, colour = "#00B20B", family = "Helvetica", fontface = "bold", hjust = 0) + 
+annotate("text", x = -110 , y = 123 , label = "vrs", size= 3, colour = "#969696", family = "Helvetica", hjust = 0)
+```
+
+![](radar_files/figure-markdown_github/unnamed-chunk-15-1.png)
+
+Wow! What a surprise Messi is better! The best way to understand the code is to play with it, choose other players from the [EA Database](https://www.easports.com/fifa/ultimate-team/fut/database), change the colours and titles...
+
+Full Code
+---------
+
+``` r
+#Create a data frame from Messi and AdamaTraore's FIFA 2018 attribute data 
+
+LionelMessi <- c(Pace = 96, Shooting = 97, Passing = 98, Dribbling = 99,Defending = 45,Physical = 81)
+AdamaTraore <- c(Pace = 93, Shooting = 60, Passing = 59, Dribbling = 80,Defending = 24,Physical = 70)
+
+data <- rbind(LionelMessi, AdamaTraore)
+
+Attributes = colnames(data)
+AttNo = length(Attributes)
+
+data <- cbind(data, data[,1])
+
+circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
+    r = diameter / 2
+    tt <- seq(0,2*pi,length.out = npoints)
+    xx <- center[1] + r * cos(tt)
+    yy <- center[2] + r * sin(tt)
+    return(data.frame(x = xx, y = yy))
+}
+
+circle1 <- circleFun(c(0,0),200,npoints = 100)
+circle2 <- circleFun(c(0,0),150,npoints = 100)
+circle3 <- circleFun(c(0,0),100,npoints = 100)
+circle4 <- circleFun(c(0,0),50,npoints = 100)
+
+angle_spilt <- (2*pi) / (AttNo)
+angle_spilt_seq <- seq(0,(2*pi),angle_spilt)
+
+# empty dataframes to catch results 
+LineData <- data.frame(x = numeric, y = numeric, stringsAsFactors = F)
+TitlePositioning <- data.frame(title = character, x = numeric, y = numeric, stringsAsFactors = F)
+
+## create plot background construction data  
+for (i in 1:NCOL(data)) {
+  angle_multiplier <- if(i < NCOL(data)){i}else{1}
+  radians_for_segment <- angle_spilt_seq[i]
+
+  x <- 100 * cos(radians_for_segment)
+  y <- 100 * sin(radians_for_segment)
+  temp <- data.frame(x = x, y = y, stringsAsFactors = F)
+  LineData <- rbind(temp, LineData)
+  
+  x <- 112 * cos(radians_for_segment)
+  y <- 112 * sin(radians_for_segment)
+  title <- colnames(data)[i]
+  temp <- data.frame(title = title, x = x, y = y, stringsAsFactors = F)
+  TitlePositioning <- rbind(temp, TitlePositioning)
+}
+
+## create the value labellings data 
+values <- c(25,50,75)
+radian_for_values <- angle_spilt / 2
+x <- values * cos(radian_for_values)
+y <- values * sin(radian_for_values)
+ValuePositioning <- data.frame(values = values, x = x, y = y, stringsAsFactors = F)
+
+## Add the origin values for the lines 
+LineData$x2 <- 0
+LineData$y2 <- 0
+
+# empty dataframe to catch result 
+polydata <- data.frame(player = character, value = numeric, radians = numeric, x = numeric, y = numeric, stringsAsFactors = F)
+
+## create polygon data for the players 
+for (i in 1:NCOL(data)) {
+  
+  for (p in 1:NROW(data)) {
+    
+  player2calc <- data[p,]
+  angle_multiplier <- if(i < NCOL(data)){i}else{1}
+  radians_for_segment <- angle_spilt_seq[i]
+  x <- player2calc[i] * cos(radians_for_segment)
+  y <- player2calc[i] * sin(radians_for_segment)
+  player <- rownames(data)[p]
+  temp <- data.frame(player = player, value = player2calc[i], radians = radians_for_segment, x = x, y = y, stringsAsFactors = F)
+  polydata <- rbind(temp, polydata)
+  }
+}
+
+## split the data up into player 1 and 2
+playersDB <- unique(polydata$player)
+player1 <- polydata[which(polydata$player == playersDB[1]),]
+player2 <- polydata[which(polydata$player == playersDB[2]),]
+
+## create the title string for player 1
+Player1_title <- gsub('([[:upper:]])', ' \\1', playersDB[1])
+Player1_title <- trimws(Player1_title)
+
+## Create Title Strings for Player 2
+Player2_title <- gsub('([[:upper:]])', ' \\1', playersDB[2])
+Player2_title <- trimws(Player2_title)
+
+require(ggplot2)
+
+
+## Add the radar background
+ggplot() + xlim(c(-120, 120)) + ylim(c(-120, 150)) + 
+## Add circles
+geom_polygon(data = circle1, aes(x=x,y=y),fill = "#F0F0F0", colour = "#969696") + geom_polygon(data = circle2, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") + geom_polygon(data = circle3, aes(x=x,y=y),fill = "#F0F0F0", colour = "#d9d9d9") + geom_polygon(data = circle4, aes(x=x,y=y),fill = "#FFFFFF", colour = "#d9d9d9") +
+## Change the theme to void 
+theme_void() +
+## Add the segment lines and attribute/value titles 
+geom_segment(data=LineData, aes(x = LineData$x, y = LineData$y, xend = LineData$x2, yend = LineData$y2),colour = "#d9d9d9", linetype = "dashed") + 
+annotate("text", x = TitlePositioning$x , y = TitlePositioning$y, label = TitlePositioning$title, size= 2.5) +  
+annotate("text", x = ValuePositioning$x , y = ValuePositioning$y, label = ValuePositioning$values, size= 2.5, colour = "#969696") +
+## Add player 1 data 
+geom_polygon(data = player1, aes(x=x,y=y),fill = "#A30845", colour = "#A30845", alpha = 0.3) + geom_point(data = player1, aes(x = x, y = y),size=0.3, colour= "#A30845") + 
+## Add Chart Title
+annotate("text", x = -110 , y = 130, label = Player1_title, size= 5, colour = "#A30845", family = "Helvetica", fontface = "bold", hjust = 0) + 
+annotate("text", x = 110 , y = 130, label = "FIFA 18 Data", size= 4, colour = "#969696", family = "Helvetica", fontface = "bold", hjust = 1) +
+## Add the player 2 polygon and data points
+geom_polygon(data = player2, aes(x=x,y=y),fill = "#00B20B", colour = "#00B20B", alpha = 0.3) +
+geom_point(data = player2, aes(x = x, y = y),size=0.3, colour= "#00B20B") +
+## Add the titles for player 2
+annotate("text", x = -110 , y = 116, label = Player2_title, size= 5, colour = "#00B20B", family = "Helvetica", fontface = "bold", hjust = 0) + 
+annotate("text", x = -110 , y = 123 , label = "vrs", size= 3, colour = "#969696", family = "Helvetica", hjust = 0)
+```
+
+![](radar_files/figure-markdown_github/unnamed-chunk-16-1.png)
