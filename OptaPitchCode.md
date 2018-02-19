@@ -142,7 +142,7 @@ Now we have all the data we will need to generate the pitch plot. So let's build
 ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-7-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-7-1.png)
 
 Now let's utilise the theme that we have created to give us the blank canvas and styling rules we want.
 
@@ -153,7 +153,7 @@ ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
 theme_blankPitch() 
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-8-1.png)
 
 Now that we have a blank canvas let's start adding the pitch elements.
 
@@ -168,7 +168,7 @@ theme_blankPitch() +
 geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour)
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-9-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-9-1.png)
 
 The 18 yard boxes:
 
@@ -185,7 +185,7 @@ geom_rect(aes(xmin=0, xmax=TheBoxHeight[1], ymin=TheBoxWidth[1], ymax=TheBoxWidt
 geom_rect(aes(xmin=TheBoxHeight[2], xmax=xmax, ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour)
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-10-1.png)
 
 The 6 yard boxes:
 
@@ -206,7 +206,7 @@ geom_rect(aes(xmin=0, xmax=box6yardHeight[1], ymin=box6yardWidth[1], ymax=box6ya
 geom_rect(aes(xmin=box6yardHeight[2], xmax=xmax, ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour) 
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-11-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-11-1.png)
 
 The half-way line:
 
@@ -229,7 +229,7 @@ geom_rect(aes(xmin=box6yardHeight[2], xmax=xmax, ymin=box6yardWidth[1], ymax=box
 geom_segment(aes(x = xmax/2, y = ymin, xend = xmax/2, yend = ymax),colour = line_colour) 
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-12-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-12-1.png)
 
 The Left and Right D arcs:
 
@@ -256,7 +256,7 @@ geom_path(data=Dleft, aes(x=x,y=y), colour = line_colour) +
 geom_path(data=Dright, aes(x=x,y=y), colour = line_colour) 
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-13-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-13-1.png)
 
 The Center-Circle:
 
@@ -285,7 +285,7 @@ geom_path(data=Dright, aes(x=x,y=y), colour = line_colour) +
 geom_path(data=center_circle, aes(x=x,y=y), colour = line_colour)
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-14-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-14-1.png)
 
 The Penalty and Center-Cirle Spots:
 
@@ -320,7 +320,7 @@ geom_point(aes(x = (xmax-(penspot)) , y = ymax/2), colour = line_colour) +
 geom_point(aes(x = (xmax/2) , y = ymax/2), colour = line_colour)
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-15-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-15-1.png)
 
 The corner flag borders:
 
@@ -360,7 +360,7 @@ geom_path(data=BottomLeftCorner, aes(x=x,y=y), colour = line_colour) +
 geom_path(data=BottomRightCorner, aes(x=x,y=y), colour = line_colour)
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-16-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-16-1.png)
 
 Last but not least the Goals
 
@@ -404,7 +404,7 @@ geom_segment(aes(x = 0, y = GoalPosts[1], xend = 0, yend = GoalPosts[2]),colour 
 geom_segment(aes(x = xmax, y = GoalPosts[1], xend = xmax-10, yend = GoalPosts[2]),colour = goal_colour, size = 1) 
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-17-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-17-1.png)
 
 Changing it to a Function
 -------------------------
@@ -543,7 +543,6 @@ createPitch <- function(xmax, ymax, grass_colour, line_colour, background_colour
   return(p)
 }
 ```
-
 Now that we have created our function we can use it to create varations of pitches:
 
 ``` r
@@ -558,15 +557,13 @@ xmax <- 10600
 createPitch(xmax, ymax, grass_colour, line_colour, background_colour, goal_colour)
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-19-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-19-1.png)
 
 ``` r
 ## or you can define the values as you call the function 
 
 createPitch(10600, 7040, "#775D6A", "#F4828C", "#775D6A", "#7E3C5D")
 ```
-
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-20-1.png)
 
 Try some other variations
 -------------------------
@@ -576,18 +573,18 @@ Try some other variations
 createPitch(10600, 7040, "#538032", "#ffffff", "#538032", "#000000")
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-21-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-21-1.png)
 
 ``` r
 ## night theme 
 createPitch(10600, 7040, "#202020", "#797876", "#202020", "#131313")
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-21-2.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-21-2.png)
 
 ``` r
 ## Blue 
 createPitch(10600, 7040, "#224C56", "#B3CED9", "#224C56", "#15393D")
 ```
 
-![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-21-3.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/unnamed-chunk-21-3.png)
