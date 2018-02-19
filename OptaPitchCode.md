@@ -1,0 +1,593 @@
+Building a OPTA ready Pitch in R with ggplot2
+================
+
+This post is a R conversion of a previous [FC Python's article](https://fcpython.com/tag/radar-chart), follow them on [twitter](www.twitter.com/FC_Python) if you have a desire to learn Python then they are a fantastic resource!
+
+There are lots of reasons why we might want to draw a line or circle on our charts. We could look to add an average line, highlight a key data point or even draw a picture. This article will show how to add lines, circles and arcs with the example of a football pitch map.
+
+This example works with FIFA’s offical pitch sizes, but you might want to change them according to your data/sport/needs. We will create this plot with the ggplot2 package so make sure it's installed.
+
+Before we start, the plotting will throw up some warnings from R, I am going to cheat and turn these off. Do not get into a habit of this!
+
+``` r
+options(warn=-1)
+```
+
+Setting a Theme
+---------------
+
+Firstly, we need to set a colour theme, I have gone with a adventurous pink scheme which I chose with the help of [Adobe Color Tool](https://color.adobe.com/).
+
+``` r
+require(ggplot2)
+```
+
+    ## Loading required package: ggplot2
+
+``` r
+grass_colour <- "#775D6A"
+line_colour <- "#F4828C"
+background_colour <- "#775D6A"
+goal_colour <- "#7E3C5D"
+```
+
+Next we want to create a theme for our plots which will help us control how the plot is displayed via ggplot. We turn a lot of the plot feautres off using element\_blank() and set others to be inline with our colour scheme.
+
+``` r
+theme_blankPitch = function(size=12) { 
+  theme(
+    #axis.line=element_blank(), 
+    axis.text.x=element_blank(), 
+    axis.text.y=element_blank(), 
+    #axis.ticks.y=element_text(size=size),
+    #   axis.ticks=element_blank(),
+    axis.ticks.length=unit(0, "lines"), 
+    #axis.ticks.margin=unit(0, "lines"), 
+    axis.title.x=element_blank(), 
+    axis.title.y=element_blank(), 
+    legend.background=element_rect(fill=background_colour, colour=NA), 
+    legend.key=element_rect(colour=background_colour,fill=background_colour), 
+    legend.key.size=unit(1.2, "lines"), 
+    legend.text=element_text(size=size), 
+    legend.title=element_text(size=size, face="bold",hjust=0),
+    strip.background = element_rect(colour = background_colour, fill = background_colour, size = .5),
+    panel.background=element_rect(fill=background_colour,colour=background_colour), 
+    #       panel.border=element_blank(), 
+    panel.grid.major=element_blank(), 
+    panel.grid.minor=element_blank(), 
+    panel.spacing=element_blank(), 
+    plot.background=element_blank(), 
+    plot.margin=unit(c(0, 0, 0, 0), "lines"), 
+    plot.title=element_text(size=size*1.2), 
+    strip.text.y=element_text(colour=background_colour,size=size,angle=270),
+    strip.text.x=element_text(size=size*1))}
+```
+
+Creating the Dimension Data
+---------------------------
+
+Next we define the overall pitch size and store them as variables, we use the unit of cm for added precision.
+
+``` r
+ymin <- 0 
+ymax <- 7040
+xmin <- 0 
+xmax <- 10600
+```
+
+Our next job is to define and calculate the pitch markings we want to plot
+
+``` r
+# Defining dimensions
+GoalWidth <- 732
+penspot <- 1100
+boxedgeW <- 4032
+boxedgeL <- 1650
+box6yardW <- 1832
+box6yardL <- 550
+
+## dimensions calculations 
+# The 18 Yard Box
+TheBoxWidth <- c(((ymax / 2) + (boxedgeW / 2)),((ymax / 2) - (boxedgeW / 2)))
+TheBoxHeight <- c(boxedgeL,xmax-boxedgeL)
+GoalPosts <- c(((ymax / 2) + (GoalWidth / 2)),((ymax / 2) - (GoalWidth / 2)))
+  
+# The 6 Yard Box
+box6yardWidth <- c(((ymax / 2) + (box6yardW / 2)),((ymax / 2) - (box6yardW / 2)))
+box6yardHeight <- c(box6yardL,xmax-box6yardL)
+```
+
+Next is to calculate the data we need to plot the circles and arcs. We reuse the circle function from our previous [radar tutorial](https://github.com/FCrSTATS/Visualisations/blob/master/2.BuildingARadar.md) to help.
+
+``` r
+## Centre circle dimensions 
+centreCirle_d <- 1830
+
+## define the circle function
+circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
+    r = diameter / 2
+    tt <- seq(0,2*pi,length.out = npoints)
+    xx <- center[1] + r * cos(tt)
+    yy <- center[2] + r * sin(tt)
+    return(data.frame(x = xx, y = yy))
+}
+
+#### create leftD arc ####
+Dleft <- circleFun(c((penspot),(ymax/2)),centreCirle_d,npoints = 1000)
+## remove part that is in the box
+Dleft <- Dleft[which(Dleft$x >= (boxedgeL)),]
+
+## create rightD arc  ####
+Dright <- circleFun(c((xmax-(penspot)),(ymax/2)),centreCirle_d,npoints = 1000)
+## remove part that is in the box
+Dright <- Dright[which(Dright$x <= (xmax-(boxedgeL))),]
+
+#### create center circle ####
+center_circle <- circleFun(c((xmax/2),(ymax/2)),centreCirle_d,npoints = 100)
+
+## create corner flag radius ####
+TopLeftCorner <- circleFun(c(xmin,ymax),200,npoints = 1000)
+TopRightCorner <- circleFun(c(xmax,ymax),200,npoints = 1000)
+BottomLeftCorner <- circleFun(c(xmin,ymin),200,npoints = 1000)
+BottomRightCorner <- circleFun(c(xmax,ymin),200,npoints = 1000)
+```
+
+Let's Get Plotting
+------------------
+
+Now we have all the data we will need to generate the pitch plot. So let's build the plot layer-by-layer, step-by-step to help us understand the code.
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-7-1.png)
+
+Now let's utilise the theme that we have created to give us the blank canvas and styling rules we want.
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
+# add the theme 
+theme_blankPitch() 
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-8-1.png)
+
+Now that we have a blank canvas let's start adding the pitch elements.
+
+The border:
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
+# add the theme 
+theme_blankPitch() +
+# add the base rectangle of the pitch 
+geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour)
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-9-1.png)
+
+The 18 yard boxes:
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
+# add the theme 
+theme_blankPitch() +
+# add the base rectangle of the pitch 
+geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour) +
+# add the 18 yard box Left
+geom_rect(aes(xmin=0, xmax=TheBoxHeight[1], ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) + 
+# add the 18 yard box Right
+geom_rect(aes(xmin=TheBoxHeight[2], xmax=xmax, ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour)
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-10-1.png)
+
+The 6 yard boxes:
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
+# add the theme 
+theme_blankPitch() +
+# add the base rectangle of the pitch 
+geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour) +
+# add the 18 yard box Left
+geom_rect(aes(xmin=0, xmax=TheBoxHeight[1], ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) + 
+# add the 18 yard box Right
+geom_rect(aes(xmin=TheBoxHeight[2], xmax=xmax, ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) +
+# add the six yard box Left
+geom_rect(aes(xmin=0, xmax=box6yardHeight[1], ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  +
+# add the six yard box Right
+geom_rect(aes(xmin=box6yardHeight[2], xmax=xmax, ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour) 
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-11-1.png)
+
+The half-way line:
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
+# add the theme 
+theme_blankPitch() +
+# add the base rectangle of the pitch 
+geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour) +
+# add the 18 yard box Left
+geom_rect(aes(xmin=0, xmax=TheBoxHeight[1], ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) + 
+# add the 18 yard box Right
+geom_rect(aes(xmin=TheBoxHeight[2], xmax=xmax, ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) +
+# add the six yard box Left
+geom_rect(aes(xmin=0, xmax=box6yardHeight[1], ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  +
+# add the six yard box Right
+geom_rect(aes(xmin=box6yardHeight[2], xmax=xmax, ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  + 
+# Add half way line 
+geom_segment(aes(x = xmax/2, y = ymin, xend = xmax/2, yend = ymax),colour = line_colour) 
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-12-1.png)
+
+The Left and Right D arcs:
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
+# add the theme 
+theme_blankPitch() +
+# add the base rectangle of the pitch 
+geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour) +
+# add the 18 yard box Left
+geom_rect(aes(xmin=0, xmax=TheBoxHeight[1], ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) + 
+# add the 18 yard box Right
+geom_rect(aes(xmin=TheBoxHeight[2], xmax=xmax, ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) +
+# add the six yard box Left
+geom_rect(aes(xmin=0, xmax=box6yardHeight[1], ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  +
+# add the six yard box Right
+geom_rect(aes(xmin=box6yardHeight[2], xmax=xmax, ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  + 
+# Add half way line 
+geom_segment(aes(x = xmax/2, y = ymin, xend = xmax/2, yend = ymax),colour = line_colour) +
+# add left D 
+geom_path(data=Dleft, aes(x=x,y=y), colour = line_colour) + 
+# add Right D 
+geom_path(data=Dright, aes(x=x,y=y), colour = line_colour) 
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-13-1.png)
+
+The Center-Circle:
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
+# add the theme 
+theme_blankPitch() +
+# add the base rectangle of the pitch 
+geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour) +
+# add the 18 yard box Left
+geom_rect(aes(xmin=0, xmax=TheBoxHeight[1], ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) + 
+# add the 18 yard box Right
+geom_rect(aes(xmin=TheBoxHeight[2], xmax=xmax, ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) +
+# add the six yard box Left
+geom_rect(aes(xmin=0, xmax=box6yardHeight[1], ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  +
+# add the six yard box Right
+geom_rect(aes(xmin=box6yardHeight[2], xmax=xmax, ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  + 
+# Add half way line 
+geom_segment(aes(x = xmax/2, y = ymin, xend = xmax/2, yend = ymax),colour = line_colour) +
+# add left D 
+geom_path(data=Dleft, aes(x=x,y=y), colour = line_colour) + 
+# add Right D 
+geom_path(data=Dright, aes(x=x,y=y), colour = line_colour) + 
+# add centre circle 
+geom_path(data=center_circle, aes(x=x,y=y), colour = line_colour)
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-14-1.png)
+
+The Penalty and Center-Cirle Spots:
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
+# add the theme 
+theme_blankPitch() +
+# add the base rectangle of the pitch 
+geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour) +
+# add the 18 yard box Left
+geom_rect(aes(xmin=0, xmax=TheBoxHeight[1], ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) + 
+# add the 18 yard box Right
+geom_rect(aes(xmin=TheBoxHeight[2], xmax=xmax, ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) +
+# add the six yard box Left
+geom_rect(aes(xmin=0, xmax=box6yardHeight[1], ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  +
+# add the six yard box Right
+geom_rect(aes(xmin=box6yardHeight[2], xmax=xmax, ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  + 
+# Add half way line 
+geom_segment(aes(x = xmax/2, y = ymin, xend = xmax/2, yend = ymax),colour = line_colour) +
+# add left D 
+geom_path(data=Dleft, aes(x=x,y=y), colour = line_colour) + 
+# add Right D 
+geom_path(data=Dright, aes(x=x,y=y), colour = line_colour) + 
+# add centre circle 
+geom_path(data=center_circle, aes(x=x,y=y), colour = line_colour) + 
+# add penalty spot left 
+geom_point(aes(x = penspot , y = ymax/2), colour = line_colour) + 
+# add penalty spot right
+geom_point(aes(x = (xmax-(penspot)) , y = ymax/2), colour = line_colour) + 
+# add centre spot 
+geom_point(aes(x = (xmax/2) , y = ymax/2), colour = line_colour)
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-15-1.png)
+
+The corner flag borders:
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
+# add the theme 
+theme_blankPitch() +
+# add the base rectangle of the pitch 
+geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour) +
+# add the 18 yard box Left
+geom_rect(aes(xmin=0, xmax=TheBoxHeight[1], ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) + 
+# add the 18 yard box Right
+geom_rect(aes(xmin=TheBoxHeight[2], xmax=xmax, ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) +
+# add the six yard box Left
+geom_rect(aes(xmin=0, xmax=box6yardHeight[1], ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  +
+# add the six yard box Right
+geom_rect(aes(xmin=box6yardHeight[2], xmax=xmax, ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  + 
+# Add half way line 
+geom_segment(aes(x = xmax/2, y = ymin, xend = xmax/2, yend = ymax),colour = line_colour) +
+# add left D 
+geom_path(data=Dleft, aes(x=x,y=y), colour = line_colour) + 
+# add Right D 
+geom_path(data=Dright, aes(x=x,y=y), colour = line_colour) + 
+# add centre circle 
+geom_path(data=center_circle, aes(x=x,y=y), colour = line_colour) + 
+# add penalty spot left 
+geom_point(aes(x = penspot , y = ymax/2), colour = line_colour) + 
+# add penalty spot right
+geom_point(aes(x = (xmax-(penspot)) , y = ymax/2), colour = line_colour) + 
+# add centre spot 
+geom_point(aes(x = (xmax/2) , y = ymax/2), colour = line_colour) +
+# add Corner Flag corners
+geom_path(data=TopLeftCorner, aes(x=x,y=y), colour = line_colour) +
+geom_path(data=TopRightCorner, aes(x=x,y=y), colour = line_colour) +
+geom_path(data=BottomLeftCorner, aes(x=x,y=y), colour = line_colour) +
+geom_path(data=BottomRightCorner, aes(x=x,y=y), colour = line_colour)
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-16-1.png)
+
+Last but not least the Goals
+
+``` r
+## initiate the plot and set its boundaries 
+ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10))+
+# add the theme 
+theme_blankPitch() +
+# add the base rectangle of the pitch 
+geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour) +
+# add the 18 yard box Left
+geom_rect(aes(xmin=0, xmax=TheBoxHeight[1], ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) + 
+# add the 18 yard box Right
+geom_rect(aes(xmin=TheBoxHeight[2], xmax=xmax, ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) +
+# add the six yard box Left
+geom_rect(aes(xmin=0, xmax=box6yardHeight[1], ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  +
+# add the six yard box Right
+geom_rect(aes(xmin=box6yardHeight[2], xmax=xmax, ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  + 
+# Add half way line 
+geom_segment(aes(x = xmax/2, y = ymin, xend = xmax/2, yend = ymax),colour = line_colour) +
+# add left D 
+geom_path(data=Dleft, aes(x=x,y=y), colour = line_colour) + 
+# add Right D 
+geom_path(data=Dright, aes(x=x,y=y), colour = line_colour) + 
+# add centre circle 
+geom_path(data=center_circle, aes(x=x,y=y), colour = line_colour) + 
+# add penalty spot left 
+geom_point(aes(x = penspot , y = ymax/2), colour = line_colour) + 
+# add penalty spot right
+geom_point(aes(x = (xmax-(penspot)) , y = ymax/2), colour = line_colour) + 
+# add centre spot 
+geom_point(aes(x = (xmax/2) , y = ymax/2), colour = line_colour) +
+# add Corner Flag corners
+geom_path(data=TopLeftCorner, aes(x=x,y=y), colour = line_colour) +
+geom_path(data=TopRightCorner, aes(x=x,y=y), colour = line_colour) +
+geom_path(data=BottomLeftCorner, aes(x=x,y=y), colour = line_colour) +
+geom_path(data=BottomRightCorner, aes(x=x,y=y), colour = line_colour) +
+# add the goal left
+geom_segment(aes(x = 0, y = GoalPosts[1], xend = 0, yend = GoalPosts[2]),colour = goal_colour, size = 1) +
+# add the goal right
+geom_segment(aes(x = xmax, y = GoalPosts[1], xend = xmax-10, yend = GoalPosts[2]),colour = goal_colour, size = 1) 
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-17-1.png)
+
+Changing it to a Function
+-------------------------
+
+This is a lot of code and would be much easier to manage and re-use if it was a function.
+
+We need to decide which variables we may want to change in later use and then pass these to the function rather than defining them within the function. The obvious variables to change are the color scheme and the pitch dimensions.
+
+We will use function() and then pass the variables like this:
+
+function(xmax, ymax, grass\_colour, line\_colour, background\_colour, goal\_colour)
+
+We then delete where we have defined these in the original code as we wouldn't want to define them twice.
+
+The full function code below:
+
+``` r
+createPitch <- function(xmax, ymax, grass_colour, line_colour, background_colour, goal_colour){
+  theme_blankPitch = function(size=12) { 
+    theme(
+      #axis.line=element_blank(), 
+      axis.text.x=element_blank(), 
+      axis.text.y=element_blank(), 
+      #axis.ticks.y=element_text(size=size),
+      #   axis.ticks=element_blank(),
+      axis.ticks.length=unit(0, "lines"), 
+      #axis.ticks.margin=unit(0, "lines"), 
+      axis.title.x=element_blank(), 
+      axis.title.y=element_blank(), 
+      legend.background=element_rect(fill=background_colour, colour=NA), 
+      legend.key=element_rect(colour=background_colour,fill=background_colour), 
+      legend.key.size=unit(1.2, "lines"), 
+      legend.text=element_text(size=size), 
+      legend.title=element_text(size=size, face="bold",hjust=0),
+      strip.background = element_rect(colour = background_colour, fill = background_colour, size = .5),
+      panel.background=element_rect(fill=background_colour,colour=background_colour), 
+      #       panel.border=element_blank(), 
+      panel.grid.major=element_blank(), 
+      panel.grid.minor=element_blank(), 
+      panel.spacing=element_blank(), 
+      plot.background=element_blank(), 
+      plot.margin=unit(c(0, 0, 0, 0), "lines"), 
+      plot.title=element_text(size=size*1.2), 
+      strip.text.y=element_text(colour=background_colour,size=size,angle=270),
+      strip.text.x=element_text(size=size*1))}
+  
+  ymin <- 0 
+  xmin <- 0 
+  
+  # Defining dimensions
+  GoalWidth <- 732
+  penspot <- 1100
+  boxedgeW <- 4032
+  boxedgeL <- 1650
+  box6yardW <- 1832
+  box6yardL <- 550
+  
+  ## dimensions calculations 
+  # The 18 Yard Box
+  TheBoxWidth <- c(((ymax / 2) + (boxedgeW / 2)),((ymax / 2) - (boxedgeW / 2)))
+  TheBoxHeight <- c(boxedgeL,xmax-boxedgeL)
+  GoalPosts <- c(((ymax / 2) + (GoalWidth / 2)),((ymax / 2) - (GoalWidth / 2)))
+    
+  # The 6 Yard Box
+  box6yardWidth <- c(((ymax / 2) + (box6yardW / 2)),((ymax / 2) - (box6yardW / 2)))
+  box6yardHeight <- c(box6yardL,xmax-box6yardL)
+  
+  ## Centre circle dimensions 
+  centreCirle_d <- 1830
+  
+  ## define the circle function
+  circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
+      r = diameter / 2
+      tt <- seq(0,2*pi,length.out = npoints)
+      xx <- center[1] + r * cos(tt)
+      yy <- center[2] + r * sin(tt)
+      return(data.frame(x = xx, y = yy))
+  }
+  
+  #### create leftD arc ####
+  Dleft <- circleFun(c((penspot),(ymax/2)),centreCirle_d,npoints = 1000)
+  ## remove part that is in the box
+  Dleft <- Dleft[which(Dleft$x >= (boxedgeL)),]
+  
+  ## create rightD arc  ####
+  Dright <- circleFun(c((xmax-(penspot)),(ymax/2)),centreCirle_d,npoints = 1000)
+  ## remove part that is in the box
+  Dright <- Dright[which(Dright$x <= (xmax-(boxedgeL))),]
+  
+  #### create center circle ####
+  center_circle <- circleFun(c((xmax/2),(ymax/2)),centreCirle_d,npoints = 100)
+  
+  ## create corner flag radius ####
+  TopLeftCorner <- circleFun(c(xmin,ymax),200,npoints = 1000)
+  TopRightCorner <- circleFun(c(xmax,ymax),200,npoints = 1000)
+  BottomLeftCorner <- circleFun(c(xmin,ymin),200,npoints = 1000)
+  BottomRightCorner <- circleFun(c(xmax,ymin),200,npoints = 1000)
+  
+  p <- ggplot() + xlim(c(-10,xmax+10)) + ylim(c(-10,ymax+10)) + 
+  # add the theme 
+  theme_blankPitch() +
+  # add the base rectangle of the pitch 
+  geom_rect(aes(xmin=0, xmax=xmax, ymin=0, ymax=ymax), fill = grass_colour, colour = line_colour) +
+  # add the 18 yard box Left
+  geom_rect(aes(xmin=0, xmax=TheBoxHeight[1], ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) + 
+  # add the 18 yard box Right
+  geom_rect(aes(xmin=TheBoxHeight[2], xmax=xmax, ymin=TheBoxWidth[1], ymax=TheBoxWidth[2]), fill = grass_colour, colour = line_colour) +
+  # add the six yard box Left
+  geom_rect(aes(xmin=0, xmax=box6yardHeight[1], ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  +
+  # add the six yard box Right
+  geom_rect(aes(xmin=box6yardHeight[2], xmax=xmax, ymin=box6yardWidth[1], ymax=box6yardWidth[2]), fill = grass_colour, colour = line_colour)  + 
+  # Add half way line 
+  geom_segment(aes(x = xmax/2, y = ymin, xend = xmax/2, yend = ymax),colour = line_colour) +
+  # add left D 
+  geom_path(data=Dleft, aes(x=x,y=y), colour = line_colour) + 
+  # add Right D 
+  geom_path(data=Dright, aes(x=x,y=y), colour = line_colour) + 
+  # add centre circle 
+  geom_path(data=center_circle, aes(x=x,y=y), colour = line_colour) + 
+  # add penalty spot left 
+  geom_point(aes(x = penspot , y = ymax/2), colour = line_colour) + 
+  # add penalty spot right
+  geom_point(aes(x = (xmax-(penspot)) , y = ymax/2), colour = line_colour) + 
+  # add centre spot 
+  geom_point(aes(x = (xmax/2) , y = ymax/2), colour = line_colour) +
+  # add Corner Flag corners
+  geom_path(data=TopLeftCorner, aes(x=x,y=y), colour = line_colour) +
+  geom_path(data=TopRightCorner, aes(x=x,y=y), colour = line_colour) +
+  geom_path(data=BottomLeftCorner, aes(x=x,y=y), colour = line_colour) +
+  geom_path(data=BottomRightCorner, aes(x=x,y=y), colour = line_colour) +
+  # add the goal left
+  geom_segment(aes(x = 0, y = GoalPosts[1], xend = 0, yend = GoalPosts[2]),colour = goal_colour, size = 1) +
+  # add the goal right
+  geom_segment(aes(x = xmax, y = GoalPosts[1], xend = xmax-10, yend = GoalPosts[2]),colour = goal_colour, size = 1) 
+  
+  return(p)
+}
+```
+
+Now that we have created our function we can use it to create varations of pitches:
+
+``` r
+## you can define the values first like below
+grass_colour <- "#775D6A"
+line_colour <- "#F4828C"
+background_colour <- "#775D6A"
+goal_colour <- "#7E3C5D"
+ymax <- 7040
+xmax <- 10600
+
+createPitch(xmax, ymax, grass_colour, line_colour, background_colour, goal_colour)
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-19-1.png)
+
+``` r
+## or you can define the values as you call the function 
+
+createPitch(10600, 7040, "#775D6A", "#F4828C", "#775D6A", "#7E3C5D")
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-20-1.png)
+
+Try some other variations
+-------------------------
+
+``` r
+## green 
+createPitch(10600, 7040, "#538032", "#ffffff", "#538032", "#000000")
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-21-1.png)
+
+``` r
+## night theme 
+createPitch(10600, 7040, "#202020", "#797876", "#202020", "#131313")
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-21-2.png)
+
+``` r
+## Blue 
+createPitch(10600, 7040, "#224C56", "#B3CED9", "#224C56", "#15393D")
+```
+
+![](OptaPitchCode_files/figure-markdown_github/unnamed-chunk-21-3.png)
