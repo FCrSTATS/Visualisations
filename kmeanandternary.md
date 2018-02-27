@@ -1,7 +1,7 @@
 Ternary Plots and K-means Clustering
 ================
 
-If a player gets possession of the ball there are only three onward outcomes, she passess, she shoots or she dribbles. We can present these as decision %'s ... i.e. She passes 65% of the time, whilst shooting 23% of the time and then dribbles 12% of the time.
+If a player gets possession of the ball there are only three positive onward outcomes, she passess, she shoots or she dribbles. We can present these as decision %'s ... i.e. She passes 65% of the time, whilst shooting 23% of the time and then dribbles 12% of the time.
 
 Let's create some fake data for a league of players using the knowledge we learnt [here](https://github.com/FCrSTATS/R_basics/blob/master/5.WhileLoops.md) and [here](https://github.com/FCrSTATS/R_basics/blob/master/9.RandomExpectedGoals.md).
 
