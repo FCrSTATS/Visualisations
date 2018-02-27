@@ -156,7 +156,7 @@ plot <- ggtern(data = Results, aes(x = Pass, y = Dribble, z = Shoot)) +
 plot
 ```
 
-![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/ternary4.png?raw=true)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/ternary3.png?raw=true)
 
 This is much better and it's easy to see how the player fits within the overal dataset. Maybe we would want to see how a full team of players fit within the dataset.
 
