@@ -231,6 +231,6 @@ plot
 
 ![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/ternary5.png?raw=true)
 
-We can see that players within Cluster 3 have a high tendancy to Pass with over 80 of their actions being passes. Maybe we are about to sell our best midfielder who dictates and maintains our possessions. If we were looking across the league for a replacement we could focus our efforts on players that also reside in cluster 3.
+We can see that players within Cluster 3 have a high tendancy to Pass with over 80% of their actions being passes. Maybe we are about to sell our best midfielder who dictates and maintains our possessions. If we were looking across the league for a replacement we could focus our efforts on players that also reside in Cluster 3.
 
 Granted we are using fake data but this article may spark a thought about how you could use ternary plots and/or k-means clustering with other data.
