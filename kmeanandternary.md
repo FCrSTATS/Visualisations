@@ -3,7 +3,7 @@ Ternary Plots and K-means Clustering
 
 If a player gets possession of the ball there are only three onward outcomes, she passess, she shoots or she dribbles. We can present these as decision %'s ... i.e. She passes 65% of the time, whilst shooting 23% of the time and then dribbles 12% of the time.
 
-Let's create some fake data for a league of players using the knowledge we learnt here and here.
+Let's create some fake data for a league of players using the knowledge we learnt [here](https://github.com/FCrSTATS/R_basics/blob/master/5.WhileLoops.md) and [here](https://github.com/FCrSTATS/R_basics/blob/master/9.RandomExpectedGoals.md).
 
 ``` r
 ## Create an empty dataframe that we use to 'catch' the results from our while loop. 
@@ -101,7 +101,8 @@ plot <- ggtern(data = Results, aes(x = Pass, y = Dribble, z = Shoot)) +
 plot
 ```
 
-![](kmeanandternary_files/figure-markdown_github/unnamed-chunk-2-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/ternary1.png?raw=true)
+
 
 Fantastic, we have each of our players plotted and this provides us an overview of the players in our fake league. Maybe, we want to see how one specific player lays within the dataset... let's see where Player12 sits.
 
@@ -130,7 +131,7 @@ plot <- ggtern(data = Results, aes(x = Pass, y = Dribble, z = Shoot)) +
 plot
 ```
 
-![](kmeanandternary_files/figure-markdown_github/unnamed-chunk-3-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/ternary2.png?raw=true)
 
 This is a little difficult to see so let's make the other datapoints grey and not black.
 
@@ -155,7 +156,7 @@ plot <- ggtern(data = Results, aes(x = Pass, y = Dribble, z = Shoot)) +
 plot
 ```
 
-![](kmeanandternary_files/figure-markdown_github/unnamed-chunk-4-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/ternary4.png?raw=true)
 
 This is much better and it's easy to see how the player fits within the overal dataset. Maybe we would want to see how a full team of players fit within the dataset.
 
@@ -184,7 +185,7 @@ plot <- ggtern(data = Results, aes(x = Pass, y = Dribble, z = Shoot)) +
 plot
 ```
 
-![](kmeanandternary_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/ternary4.png?raw=true)
 
 Fantastic, I think this works pretty well, have a play around with the code and further feautures of the ggtern package and see if you can make it better.
 
@@ -228,7 +229,7 @@ plot <- ggtern(data = Results, aes(x = Pass, y = Dribble, z = Shoot)) +
 plot
 ```
 
-![](kmeanandternary_files/figure-markdown_github/unnamed-chunk-7-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/ternary5.png?raw=true)
 
 We can see that players within Cluster 3 have a high tendancy to Pass with over 80& of their actions being passes. Maybe we are about to sell our best midfielder who dictates and maintains our possessions. If we were looking across the league for a replacement we could focus our efforts on players that also reside in cluster 3.
 
