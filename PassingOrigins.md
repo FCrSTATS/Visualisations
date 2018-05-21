@@ -1,11 +1,9 @@
 Pressure Profiles
 ================
-FC\_rSTATS
-20/05/2018
 
 Women's Football Data
 ---------------------
-
+[FC Python](https://fcpython.com/tag/radar-chart)
 Earlier this month Statsbomb announced their data product which looks to improve the current data offerings on the market. Interestingly, Statsbomb will be collecting data on women's football. The other day Ted Knutson tweeted:
 
 "\#WhatIf we collect data on top flight women's football, on the same spec as the men, and give it away to clubs and fans alike, for free? Can we better support and help create the next generation of women's football coaches, player, writers, and fans?"
@@ -16,6 +14,8 @@ An Idea
 -------
 
 I love myself a histogram as they are accessible ways of seeing patterns within the data. Mara Averick tweeted about Simon Jackson's work on histograms and how they can be layered to great effect.
+
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/example.jpg?raw=true)
 
 I was searching for that could utilise this technique to good effect. I was intrigued to use the pressure metrics that are new to Statsbomb but I just couldn't wrestle an idea together in the time slot I had to make this tutorial. I therefore settled on our old friend passes...
 
@@ -115,8 +115,7 @@ We will use ggplot2 package to help us with this, and we will build the plot lay
 ## first we build the base plot, confirm the dataframe we will be using and the metric we will plot (location_x) which is vertical origin of the pass.  
 ggplot(data=df_pass_T1, aes(df_pass_T1$location_x))
 ```
-
-![](PassingOrigins_files/figure-markdown_github/unnamed-chunk-6-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown.png?raw=true)
 
 Great, let's add the histogram via geom\_histogram(). I set the binwidth to 5 and reduce the alpha (opacity) of the plot to 70% or 0.7, lastly I choose a faded pink for the fill.
 
@@ -126,7 +125,7 @@ ggplot(data=df_pass_T1, aes(df_pass_T1$location_x)) +
   geom_histogram(binwidth = 5, alpha = .7, fill = "#EDA09F")
 ```
 
-![](PassingOrigins_files/figure-markdown_github/unnamed-chunk-7-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown-2.png?raw=true)
 
 This provides us with a great base to work from, we know the data is plotting fine and all we need to do now is to get control of how the plot looks.
 
@@ -140,7 +139,7 @@ ylim(c(-5,50)) +
 xlim(c(-5,125))
 ```
 
-![](PassingOrigins_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown-3.png?raw=true)
 
 Although the plot hasn't changed much, the last step will really help us out later.
 
@@ -156,7 +155,7 @@ ggtitle(paste0(Teams[1],": Vertical Origin of Passes (x)")) +
 theme_void()
 ```
 
-![](PassingOrigins_files/figure-markdown_github/unnamed-chunk-9-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown-4.png?raw=true)
 
 Perfect, this is much cleaner and I am pretty happy with this as the base plot. Now let's add Demi Stokes data over the top.
 
@@ -176,7 +175,7 @@ theme_void() +
 geom_histogram(data = df_player_selectT1, aes(df_player_selectT1$location_x), binwidth = 5, alpha = 1, fill = "#E24F55")
 ```
 
-![](PassingOrigins_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown-5.png?raw=true)
 
 Fantastic, we have quickly created a plot that we can use to see patterns of passing origins at team level whilst comparing player's individual contributions. If we didn't have to show the plot to anyone else we could make some conclusions, however a reader without any prior knowledge would not have a clue whats going on!
 
@@ -199,8 +198,7 @@ geom_histogram(data = df_player_selectT1, aes(df_player_selectT1$location_x), bi
 geom_segment(aes(x = -2.5, y = -2, xend = 25, yend = -2),colour = "#435366", arrow = arrow(length = unit(0.1, "cm"), type="closed")) + 
 annotate("text", x = -2.5, y = -1, label = "Attacking Direction", colour = "#435366", fontface=2, size = 3, hjust = 0)
 ```
-
-![](PassingOrigins_files/figure-markdown_github/unnamed-chunk-11-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown-5.png?raw=true)
 
 Next we can add some information on the y-axis to provide frequency context.
 
@@ -226,7 +224,7 @@ geom_segment(data = df_ticks, aes(x = x, y=y, xend = xend, yend =yend), colour =
 geom_text(data = df_ticks, aes(x = x, y=y,label = label_text), hjust=1, vjust=0.5, size = 3)
 ```
 
-![](PassingOrigins_files/figure-markdown_github/unnamed-chunk-12-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown-6.png?raw=true)
 
 We don't know which player the plot refers to! So let's add the name of the player and a pass count in \[\].
 
@@ -252,7 +250,7 @@ geom_segment(data = df_ticks, aes(x = x, y=y, xend = xend, yend =yend), colour =
 geom_text(data = df_ticks, aes(x = x, y=y,label = label_text), hjust=1, vjust=0.5, size = 3) +  annotate("text", x = 60, y = -4, label = paste0(PassTotals$player_name[1]," [",PassTotals$freq[1],"]"), colour = "#E24F55", fontface=2, size = 6) 
 ```
 
-![](PassingOrigins_files/figure-markdown_github/unnamed-chunk-13-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown-7.png?raw=true)
 
 This is pretty good and essentially we could leave it there but I feel it would be much more intuitive if we overlay the outline of a pitch on top of the plot.
 
@@ -286,7 +284,7 @@ geom_rect(aes(xmin=103.75, xmax=122.5, ymin=11, ymax=39), fill = NA, colour = "#
 geom_segment(aes(x = 60, y = 0, xend = 60, yend = 50),colour = "#435366") 
 ```
 
-![](PassingOrigins_files/figure-markdown_github/unnamed-chunk-14-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown-8.png?raw=true)
 
 Perfect, I am pretty happy with this! It's much better for the reader now and gives a good indication of the team patterns and individual contribution. Without watching much footage of MCWFC or Demi Stokes, I can already see that the left-back is extremely important to their offensive play.
 
@@ -373,4 +371,4 @@ geom_segment(aes(x = 60, y = 0, xend = 60, yend = 50),colour = "#435366")
 p1 | p2 | p3
 ```
 
-![](PassingOrigins_files/figure-markdown_github/unnamed-chunk-15-1.png)
+![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown-9.png?raw=true)
