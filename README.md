@@ -11,3 +11,5 @@ Learn to build data visualisations in R
 4. [Mapping Recieves on an Football Pitch with ggplot2](https://github.com/FCrSTATS/Visualisations/blob/master/4.MappingRecieves.md)
 
 5. [Ternary Plots and K-means Clustering](https://github.com/FCrSTATS/Visualisations/blob/master/5.TernaryPlotsandKMeans.md)
+
+6. [Layered Histograms to show Passing Origins with Women's Football Data from Statsbomb](https://github.com/FCrSTATS/Visualisations/blob/master/6.PassingOrigins.md)
