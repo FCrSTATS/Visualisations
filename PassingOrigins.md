@@ -4,16 +4,16 @@ Pressure Profiles
 Women's Football Data
 ---------------------
 [FC Python](https://fcpython.com/tag/radar-chart)
-Earlier this month Statsbomb announced their data product which looks to improve the current data offerings on the market. Interestingly, Statsbomb will be collecting data on women's football. The other day Ted Knutson tweeted:
+Earlier this month [Statsbomb](https://statsbomb.com/) announced their [data product](https://statsbomb.com/data/) which looks to improve the current data offerings on the market. Interestingly, Statsbomb will be collecting data on women's football. The other day [Ted Knutson](https://twitter.com/mixedknuts) [tweeted](https://twitter.com/mixedknuts/status/997188477434425344):
 
 "\#WhatIf we collect data on top flight women's football, on the same spec as the men, and give it away to clubs and fans alike, for free? Can we better support and help create the next generation of women's football coaches, player, writers, and fans?"
 
-The tweet got a lot of traction and we hope Statsbomb follow through with the idea. To do my part I thought I would use the data distributed at their launch event in this tutorial.
+The [tweet](https://twitter.com/mixedknuts/status/997188477434425344) got a lot of traction and we hope Statsbomb follow through with the idea. To do my part I thought I would use the data distributed at their launch event in this tutorial.
 
 An Idea
 -------
 
-I love myself a histogram as they are accessible ways of seeing patterns within the data. Mara Averick tweeted about Simon Jackson's work on histograms and how they can be layered to great effect.
+I love myself a histogram as they are accessible ways of seeing patterns within the data. [Mara Averick](https://twitter.com/dataandme) [tweeted](https://twitter.com/dataandme/status/997297983472402437) about [Simon Jackson's](https://twitter.com/drsimonj) [work](https://drsimonj.svbtle.com/plotting-background-data-for-groups-with-ggplot2?utm_content=buffer2b686&utm_medium=social&utm_source=twitter.com&utm_campaign=buffer) on histograms and how they can be layered to great effect.
 
 ![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/example.jpg?raw=true)
 
@@ -109,7 +109,7 @@ Plotting the Team's Histogram
 
 Firstly, let's plot the histogram for the whole team, get the styling right and then overlay Demi's histogram at the end.
 
-We will use ggplot2 package to help us with this, and we will build the plot layer by layer (using similar techniques that I used in the Building a Football Pitch tutorial).
+We will use ggplot2 package to help us with this, and we will build the plot layer by layer (using similar techniques that I used previously [here](https://github.com/FCrSTATS/Visualisations/blob/master/3.CreateAPitch.md) and [here](https://github.com/FCrSTATS/Visualisations/blob/master/2.BuildingARadar.md)).
 
 ``` r
 ## first we build the base plot, confirm the dataframe we will be using and the metric we will plot (location_x) which is vertical origin of the pass.  
@@ -117,7 +117,7 @@ ggplot(data=df_pass_T1, aes(df_pass_T1$location_x))
 ```
 ![](https://github.com/FCrSTATS/Visualisations/blob/master/Images/Unknown.png?raw=true)
 
-Great, let's add the histogram via geom\_histogram(). I set the binwidth to 5 and reduce the alpha (opacity) of the plot to 70% or 0.7, lastly I choose a faded pink for the fill.
+Great, let's add the histogram via geom_histogram(). I set the binwidth to 5 and reduce the alpha (opacity) of the plot to 70% or 0.7, lastly I choose a faded pink for the fill.
 
 ``` r
 ## 
