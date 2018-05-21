@@ -3,7 +3,6 @@ Passing Origins
 
 Women's Football Data
 ---------------------
-[FC Python](https://fcpython.com/tag/radar-chart)
 Earlier this month [Statsbomb](https://statsbomb.com/) announced their [data product](https://statsbomb.com/data/) which looks to improve the current data offerings on the market. Interestingly, Statsbomb will be collecting data on women's football. The other day [Ted Knutson](https://twitter.com/mixedknuts) [tweeted](https://twitter.com/mixedknuts/status/997188477434425344):
 
 "\#WhatIf we collect data on top flight women's football, on the same spec as the men, and give it away to clubs and fans alike, for free? Can we better support and help create the next generation of women's football coaches, player, writers, and fans?"
