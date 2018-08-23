@@ -1,0 +1,132 @@
+---
+title: "xG Timeline Plots"
+output: github_document
+---
+
+## xG Accumulative Charts 
+
+Expected Goals (xG) is a popularised metric for calculating the probabilty that a particular shot will be scored - explainer https://www.bbc.co.uk/sport/football/40699431. xG is a more reliable metric when assessed over seasons worth of data and single-game analysis using xG has huge weaknesses. However, single-game accumulative analysis has become popular, mainly because it shows a narrative of the match over time. 
+
+Using Statsbomb free women's football data I will run through the code to create the xG Accumulative plots. 
+
+## The Data & Setup 
+
+I will be using the recently released dataset from [Statsbomb](https://twitter.com/statsbomb), which is free to use and [easy to access](https://www.github.com). The dataset consists of 11 games at the time of writing, which is equivilent to over 25,000 events. 
+
+#### Data Load
+```{r}
+events <- readRDS("SB_events_DB.RDS") ## an events dataframe loaded from local storage - see my previous tutorial 
+```
+
+#### Package Loading
+```{r}
+require(dplyr); require(ggplot2)
+```
+
+#### Filtering to one match and two teams 
+```{r}
+## pick a random match from the Statsbomb dataset 
+randomMatch <- unique(events$match_id)[runif(1, 1, length(unique(events$match_id)) )]
+
+## select just the shots from that match 
+shotData <- events %>% filter(match_id == randomMatch & shot.statsbomb_xg > 0)
+
+## create a more precise metric for 'time' which combines minutes and seconds 
+shotData$Timer <- shotData$minute + (shotData$second / 60)
+
+## drop all unneeed data to make it easier to work with the data 
+shotData <- shotData[c(19,54,61,147)]
+
+## Create a dataframe just for the Team 1 and Team 2
+T1_shotData <- shotData %>% filter(team.name == unique(shotData$team.name)[1])
+T2_shotData <- shotData %>% filter(team.name == unique(shotData$team.name)[2])
+```
+
+#### Create the accumulative values for xG for each team  
+
+We calculate the accumulative xG total using the cumsum() function which comes pre-installed with R install. This gives us back just the data we need.
+
+```{r}
+## Team 1
+# Calculate the accumulative xG total and add it as a column to the dataframe 
+T1_shotData$xg_total <- cumsum(T1_shotData$shot.statsbomb_xg)
+# create the starting and ending rows of data to ensure that all teams start on 0 and end at 96 minutes 
+Top2add <- data.frame(team.name = unique(shotData$team.name)[1], shot.statsbomb_xg = 0, Timer = 0, shot.outcome.name = "-", xg_total = 0, stringsAsFactors = F)
+Bottom2add <- data.frame(team.name = unique(shotData$team.name)[1], shot.statsbomb_xg = 0, Timer = 96,  shot.outcome.name = "-", xg_total = max(T1_shotData$xg_total), stringsAsFactors = F)
+
+## add these rows to the data with bind_rows()
+T1_shotData <- bind_rows(T1_shotData, Top2add)
+T1_shotData <- bind_rows(T1_shotData, Bottom2add)
+
+
+## Team 2
+# Calculate the accumulative xG total and add it as a column to the dataframe 
+T2_shotData$xg_total <- cumsum(T2_shotData$shot.statsbomb_xg)
+# create the starting and ending rows of data to ensure that all teams start on 0 and end at 96 minutes 
+Top2add <- data.frame(team.name = unique(shotData$team.name)[2], shot.statsbomb_xg = 0, Timer = 0,  shot.outcome.name = "-", xg_total = 0, stringsAsFactors = F)
+Bottom2add <- data.frame(team.name = unique(shotData$team.name)[2], shot.statsbomb_xg = 0, Timer = 96,  shot.outcome.name = "-", xg_total = max(T2_shotData$xg_total), stringsAsFactors = F)
+
+## add these rows to the data with bind_rows()
+T2_shotData <- bind_rows(T2_shotData, Top2add)
+T2_shotData <- bind_rows(T2_shotData, Bottom2add)
+```
+
+
+## Plot the Data 
+
+Now we have all the data to plot lets build our plots, as always I build it layer by layer to help learning. We will use the trusted ggplot2() package. 
+
+We will use the geom_step() function that is designed specifically for the type of chart we want and takes all the hard work out of it!
+
+#### Basic Plot 
+```{r}
+p <- ggplot()
+p
+```
+
+#### Add Team 1 Data 
+```{r}
+p <- p + geom_step(data=T1_shotData, mapping=aes(x=Timer, y=xg_total), colour = "#E24F55", size = 1.5, alpha = 0.8)
+p
+```
+
+#### Add Team 1 Data 
+```{r}
+p <- p + geom_step(data=T2_shotData, mapping=aes(x=Timer, y=xg_total), colour = "#2B6DD2", size = 1.5, alpha = 0.8)
+p
+```
+
+
+#### Add the Goals 
+
+```{r}
+### prepare the data 
+T1_goals <- T1_shotData %>% filter(shot.outcome.name == "Goal")
+T2_goals <- T2_shotData %>% filter(shot.outcome.name == "Goal")
+
+## add the points on for the goals 
+p <- p + 
+geom_point(data = T1_goals, aes(x=Timer, y=xg_total), colour = "black", size = 4, alpha = 1, fill = "#E24F55", shape = 21) +
+geom_point(data = T2_goals, aes(x=Timer, y=xg_total), colour = "black", size = 4, alpha = 1, fill = "#2B6DD2", shape = 21)
+
+p
+```
+
+#### Labels, Theme & Legends  
+```{r}
+## find the axis length for the plot
+yMax <- ggplot_build(p)$layout$panel_ranges[[1]]$y.range
+
+## create the annotation titles 
+T1_label <- paste0(unique(shotData$team.name)[1], ": ", nrow(T1_goals), " Actual: ", round(max(T1_shotData$xg_total), 2), "xG Diff: ", nrow(T1_goals) - round(max(T1_shotData$xg_total), 2))
+
+T2_label <- paste0(unique(shotData$team.name)[2], ": ", nrow(T2_goals), " Actual: ", round(max(T2_shotData$xg_total), 2), "xG Diff: ", nrow(T2_goals) - round(max(T2_shotData$xg_total), 2))
+
+## add the legend 
+p + 
+annotate("text", x = 0, y = (yMax[2] - (yMax[2]*0.05)), label = T1_label, hjust = 0, colour = "#E24F55") + 
+annotate("text", x = 0, y = (yMax[2] - (yMax[2]*0.1)), label = T2_label, hjust = 0, colour = "#2B6DD2") + labs(x = "Minutes", y = "Accumulative xG") + theme_minimal()
+
+```
+
+There are many ways to style these plots but the above code will get you to the final product for you to tweak further.. enjoy. 
